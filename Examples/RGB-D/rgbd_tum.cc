@@ -20,15 +20,24 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
-
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include<opencv2/core/core.hpp>
-
+#include <sys/stat.h>
 #include<System.h>
+#include <limits>
+
 
 using namespace std;
-
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
                 vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
+
+string get_formatted_datetime();
+void appendToCSV(const std::string& filename, const std::vector<std::string>& rowData);
+string getFileName(const std::string& path);
+template<typename T>
+std::string floatToExactString(T value);
 
 int main(int argc, char **argv)
 {
@@ -138,15 +147,35 @@ int main(int argc, char **argv)
     cout << "-------" << endl << endl;
     cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
     cout << "mean tracking time: " << totaltime/nImages << endl;
-
+    
+////////////////////////////////////////////////////////////////////////////////////////////
+    mode_t permissions = 0777; 
+    std::string absolute_path = "/home/wenkai/实验记录";
+    std::string datetime = get_formatted_datetime();
+    std::string full_path = absolute_path + "/" + datetime;
+    mkdir(full_path.c_str(), permissions);
+    std::string file_path = full_path + "/CameraTrajectory.txt";
+    std::string file_path2 = full_path + "/KeyFrameTrajectory.txt";
+    
     // Save camera trajectory
-    SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");   
+    SLAM.SaveTrajectoryTUM(file_path);
+    SLAM.SaveKeyFrameTrajectoryTUM(file_path2);
+    
+    std::string version = "原始版本";
+    std::string remark = "无";
+    std::string file_path3 ="/home/wenkai/实验记录/data.csv";
+    std::string file_name = getFileName(argv[3]);
+    appendToCSV(file_path3, {file_name, datetime, floatToExactString(vTimesTrack[nImages/2]), floatToExactString(totaltime/nImages),floatToExactString(totaltime), version, remark });
 
+  //////////////////////////////////////////////////////////////////////////////////////////////  
     ofstream f("track_time.log");
    for(auto t : vTimesTrack)
      f << t << endl;
       f.close();
+    
+
+    
+
     return 0;
 }
 
@@ -175,4 +204,70 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
 
         }
     }
+}
+
+
+// 生成格式化的日期时间字符串
+std::string get_formatted_datetime() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm* local_time = std::localtime(&now_time);
+
+    std::stringstream ss;
+    ss << std::put_time(local_time, "%Y-%m-%d %H:%M");
+    return ss.str();
+}
+
+
+// 将数据追加到 CSV 文件
+void appendToCSV(const std::string& filename, const std::vector<std::string>& rowData) {
+    std::ofstream file(filename, std::ios::app);  // 追加模式打开
+    
+    if (!file.is_open()) {
+        std::cerr << "无法打开文件: " << filename << std::endl;
+        return;
+    }
+
+    // 转义特殊字符
+    for (size_t i = 0; i < rowData.size(); ++i) {
+        if (rowData[i].find('"') != std::string::npos || 
+            rowData[i].find(',') != std::string::npos) {
+            file << "\"" << rowData[i] << "\"";
+        } else {
+            file << rowData[i];
+        }
+        
+        if (i != rowData.size() - 1) {
+            file << ",";
+        }
+    }
+    
+    file << "\n";
+    file.close();
+}
+
+std::string getFileName(const std::string& path) {
+    // 同时处理Windows和Linux路径分隔符
+    size_t pos = path.find_last_of("/\\");
+    
+    // 如果找到分隔符，返回分隔符后的内容
+    if (pos != std::string::npos) {
+        // 排除以分隔符结尾的情况（如/path/to/folder/）
+        if (pos == path.length() - 1) {
+            return "";
+        }
+        return path.substr(pos + 1);
+    }
+ // 没有分隔符直接返回原字符串
+    return path;
+}
+
+
+template<typename T>
+std::string floatToExactString(T value) {
+    static_assert(std::is_floating_point<T>::value, "仅限浮点类型");
+    std::ostringstream oss;
+    oss << std::setprecision(std::numeric_limits<T>::max_digits10)
+        << value;
+    return oss.str();
 }
