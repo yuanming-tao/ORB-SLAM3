@@ -27,7 +27,8 @@
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
-
+#include"YOLOv5Detector.h"
+#include<mutex>
 #include "Tracking.h"
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
@@ -100,6 +101,7 @@ public:
     };
 
 public:
+static int mGlobalCounter;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
     System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
@@ -186,6 +188,9 @@ public:
 
     float GetImageScale();
 
+    YOLOv5Detector* mpYOLODetector; // [3,4](@ref)
+    void InitYOLO(const std::string& model_path); // 初始化YOLO [3](@ref)
+
 #ifdef REGISTER_TIMES
     void InsertRectTime(double& time);
     void InsertResizeTime(double& time);
@@ -262,6 +267,8 @@ private:
     string mStrVocabularyFilePath;
 
     Settings* settings_;
+
+
 };
 
 }// namespace ORB_SLAM

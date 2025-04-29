@@ -17,7 +17,7 @@
 */
 
 
-
+#include "YOLOv5Detector.h"
 #include "System.h"
 #include "Converter.h"
 #include <thread>
@@ -35,6 +35,7 @@
 
 namespace ORB_SLAM3
 {
+    int System::mGlobalCounter = 0;
 
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
@@ -52,7 +53,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     "under certain conditions. See LICENSE.txt." << endl << endl;
 
     cout << "Input sensor was set to: ";
-
+    mpYOLODetector = new YOLOv5Detector();
+    mpYOLODetector->Init("/home/wenkai/ORB_SLAM3/yolov5s_fp16.engine");
+    
     if(mSensor==MONOCULAR)
         cout << "Monocular" << endl;
     else if(mSensor==STEREO)
@@ -240,6 +243,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
 }
+
+YOLOv5Detector* mpYOLODetector;
 
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {

@@ -30,6 +30,7 @@
 
 
 using namespace std;
+
 void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
                 vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
 
@@ -112,7 +113,8 @@ int main(int argc, char **argv)
 
         // Pass the image to the SLAM system
         SLAM.TrackRGBD(imRGB,imD,tframe);
-
+        
+       // while(k) {std::cout<<imRGB<<std::endl;k=0;}
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 #else
@@ -162,7 +164,7 @@ int main(int argc, char **argv)
     SLAM.SaveKeyFrameTrajectoryTUM(file_path2);
     
     std::string version = "原始版本";
-    std::string remark = "无";
+    std::string remark = "yolo测试版";
     std::string file_path3 ="/home/wenkai/实验记录/data.csv";
     std::string file_name = getFileName(argv[3]);
     appendToCSV(file_path3, {file_name, datetime, floatToExactString(vTimesTrack[nImages/2]), floatToExactString(totaltime/nImages),floatToExactString(totaltime), version, remark });

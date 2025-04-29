@@ -436,4 +436,11 @@ void FrameDrawer::Update(Tracking *pTracker)
     mState=static_cast<int>(pTracker->mLastProcessedState);
 }
 
+void FrameDrawer::UpdateDetectionResult(const cv::Mat& imWithBBox) {
+    std::unique_lock<std::mutex> lock(mMutex);
+    imWithBBox.copyTo(mIm);
+   // cout<<++System::mGlobalCounter<<endl;
+
+}
+
 } //namespace ORB_SLAM

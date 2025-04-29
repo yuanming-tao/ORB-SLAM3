@@ -62,7 +62,7 @@ public:
     Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
 
     // Constructor for RGB-D cameras.
-    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
+    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera,Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),const cv::Mat &tMask =cv::Mat());
 
     // Constructor for Monocular cameras.
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, GeometricCamera* pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth, Frame* pPrevF = static_cast<Frame*>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
@@ -323,6 +323,9 @@ private:
     std::mutex *mpMutexImu;
 
 public:
+
+    cv::Mat mMask;
+
     GeometricCamera* mpCamera, *mpCamera2;
 
     //Number of KeyPoints extracted in the left and right images
@@ -367,6 +370,11 @@ public:
     }
 
     Sophus::SE3<double> T_test;
+
+    //cv::Mat mImRGB; // 存储原始RGB图像
+std::vector<cv::Rect> mvDynamicBoxes; // 动态物体检测框
+std::vector<bool> mvbDynamicFlag; // 动态点标记 [1,4](@ref)
+void MarkDynamicPoints(const std::vector<cv::Rect>& boxes); // 标记动态区域
 };
 
 }// namespace ORB_SLAM

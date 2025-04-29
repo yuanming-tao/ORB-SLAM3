@@ -41,6 +41,13 @@ MESSAGE(${OpenCV_VERSION})
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(realsense2)
+#find_package(CUDA REQUIRED)
+#find_package(TensorRT REQUIRED)
+
+
+set(TENSORRT_ROOT "/home/wenkai/TensorRT-10.9.0.34")
+set(TENSORRT_INCLUDE_DIR ${TENSORRT_ROOT}/include)
+set(TENSORRT_LIB_DIR ${TENSORRT_ROOT}/lib)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -49,6 +56,9 @@ ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+ /usr/local/cuda/include 
+ ${TENSORRT_INCLUDE_DIR}
+ 
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -82,6 +92,7 @@ src/GeometricTools.cc
 src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
+src/YOLOv5Detector.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -111,9 +122,15 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+include/YOLOv5Detector.h)
 
 add_subdirectory(Thirdparty/g2o)
+
+link_directories(
+    ${TENSORRT_LIB_DIR}          # TensorRT库路径
+    /usr/local/cuda/lib64  # CUDA库路径（若自定义）
+)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
@@ -123,6 +140,13 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
+${TENSORRT_LIB_DIR}/libnvinfer.so
+${TENSORRT_LIB_DIR}/libnvinfer_plugin.so
+${TENSORRT_LIB_DIR}/libnvonnxparser.so
+#${TENSORRT_LIB_DIR}/libnvparsers.so
+    /usr/local/cuda/lib64/libcudart.so
+    /usr/local/cuda/lib64/libcublas.so
+    /usr/local/cuda/lib64/libcudnn.so
 )
 
 # If RealSense SDK is found the library is added and its examples compiled

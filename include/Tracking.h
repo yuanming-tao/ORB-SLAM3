@@ -368,6 +368,8 @@ protected:
 
 public:
     cv::Mat mImRight;
+    cv::Mat mImRGB;    // 存储RGB图像（YOLO检测用）
+    cv::Mat mImDepth;  // 存储深度图（已存在，无需修改）
 };
 
 } //namespace ORB_SLAM

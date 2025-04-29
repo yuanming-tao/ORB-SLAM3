@@ -51,6 +51,7 @@ public:
     cv::Mat DrawRightFrame(float imageScale=1.f);
 
     bool both;
+    void UpdateDetectionResult(const cv::Mat& imWithBBox);
 
 protected:
 

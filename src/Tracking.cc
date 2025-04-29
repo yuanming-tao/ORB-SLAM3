@@ -39,7 +39,7 @@ using namespace std;
 
 namespace ORB_SLAM3
 {
-
+    int en =1;
 
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Atlas *pAtlas, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq):
     mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
@@ -1520,6 +1520,8 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename)
 {
     mImGray = imRGB;
+    mImRGB = imRGB.clone();  // 存储彩色图像
+    mImDepth = imD.clone();  // 存储深度图
     cv::Mat imDepth = imD;
 
     if(mImGray.channels()==3)
@@ -1540,13 +1542,30 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
         imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
 
+
+
+        std::vector<cv::Rect> dynamicBoxes;
+        std::vector<int> classIDs;
+        
+        cv::Mat temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
+
+
+
     if (mSensor == System::RGBD)
-        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
+        mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,nullptr,IMU::Calib(),temmask);
     else if(mSensor == System::IMU_RGBD)
         mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,&mLastFrame,*mpImuCalib);
 
 
 
+        
+     //   cv::Mat displayImg = mImRGB.clone();
+     //   for (size_t i=0; i<dynamicBoxes.size(); ++i) {
+     //       cv::rectangle(displayImg, dynamicBoxes[i], cv::Scalar(255,255,255), 2);
+     //       //cv::putText(displayImg, mpSystem->mpYOLODetector->GetClassName(classIDs[i]), 
+     //       //           dynamicBoxes[i].tl(), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255,255,255), 2);
+     //   }
+     //   mpFrameDrawer->UpdateDetectionResult(displayImg);
 
 
 
@@ -1924,6 +1943,53 @@ void Tracking::Track()
     {
         // System is initialized. Track Frame.
         bool bOK;
+
+        // ============ 插入点：YOLOv5检测与显示 ============
+        //if (mSensor == System::RGBD && !mImRGB.empty()) {
+if(0){
+
+// 主程序调用示例
+//cv::Mat test_img = cv::imread("test.jpg");
+//std::vector<cv::Rect> boxes;
+//std::vector<int> class_ids;
+//mpSystem->mpYOLODetector->SyncDetect(test_img, boxes, class_ids);
+
+
+
+
+            // 1. 执行异步检测（双缓冲机制）
+            std::vector<cv::Rect> dynamicBoxes;
+            std::vector<int> classIDs;
+            //mpSystem->mpYOLODetector->AsyncDetect(mImRGB, dynamicBoxes, classIDs);
+            cv::Mat temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
+       //     if(temmask.empty()){
+       //         std::cout << "temmask is empty" << std::endl;
+       //     }
+            //cv::imwrite("temmask.png", temmask);
+         //   while(en){std::cout<<mImRGB<<std::endl;en=0;}
+
+            // 2. 动态点过滤
+            //mCurrentFrame.MarkDynamicPoints(dynamicBoxes);
+        
+            // 3. 显示叠加
+            cv::Mat displayImg = mImRGB.clone();
+            for (size_t i=0; i<dynamicBoxes.size(); ++i) {
+                cv::rectangle(displayImg, dynamicBoxes[i], cv::Scalar(255,255,255), 2);
+                //cv::putText(displayImg, mpSystem->mpYOLODetector->GetClassName(classIDs[i]), 
+                //           dynamicBoxes[i].tl(), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255,255,255), 2);
+            }
+            mpFrameDrawer->UpdateDetectionResult(displayImg);
+            mCurrentFrame.mMask = temmask.clone();
+           // cv::imwrite("mask555.png", mCurrentFrame.mMask);
+          // std::cout << "Detected " << dynamicBoxes.size() << " objects:" << std::endl;
+         //   for (size_t i = 0; i < dynamicBoxes.size(); ++i) {
+         //       cv::Rect box = dynamicBoxes[i];
+         //       std::cout << "Object " << i + 1 << ": ";
+         //       std::cout << "x: " << box.x << ", y: " << box.y << ", width: " << box.width << ", height: " << box.height << std::endl;}
+        }
+
+
+
 
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartPosePred = std::chrono::steady_clock::now();

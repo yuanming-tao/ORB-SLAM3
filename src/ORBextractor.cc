@@ -1092,9 +1092,15 @@ namespace ORB_SLAM3
 
         Mat image = _image.getMat();
         assert(image.type() == CV_8UC1 );
+        cv::Mat mask = _mask.getMat().clone(); 
+        assert(mask.type() == CV_8UC1 );
+    
+        cv::Mat masktemp;
+        cv::bitwise_and(image, image,masktemp,mask = mask);
+        image = masktemp.clone();
 
-        // Pre-compute the scale pyramid
-        ComputePyramid(image);
+       
+        ComputePyramid(image,mask);
 
         vector < vector<KeyPoint> > allKeypoints;
         ComputeKeyPointsOctTree(allKeypoints);
@@ -1167,7 +1173,7 @@ namespace ORB_SLAM3
         return monoIndex;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image)
+    void ORBextractor::ComputePyramid(cv::Mat image,const cv::Mat& originalMask)
     {
         for (int level = 0; level < nlevels; ++level)
         {

@@ -68,3 +68,8 @@ Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500.0
 
+
+
+YOLO:
+  ModelPath: "models/yolov5s.engine"
+  ClassNames: ["person", "car", "chair"]
