@@ -128,6 +128,9 @@ public:
         OK_KLT=5
     };
 
+    int flag_yolo = 0;
+    cv::Mat mask_2;
+
     eTrackingState mState;
     eTrackingState mLastProcessedState;
 

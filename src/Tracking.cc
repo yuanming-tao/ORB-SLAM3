@@ -1546,9 +1546,15 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
 
         std::vector<cv::Rect> dynamicBoxes;
         std::vector<int> classIDs;
-        
-        cv::Mat temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
-
+        cv::Mat temmask;
+        if(flag_yolo==3)
+           {temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
+            flag_yolo = 0;
+            mask_2=temmask.clone();
+        }
+        else{flag_yolo++;
+            temmask = mask_2.clone();
+        }
 
 
     if (mSensor == System::RGBD)
@@ -1948,21 +1954,15 @@ void Tracking::Track()
         //if (mSensor == System::RGBD && !mImRGB.empty()) {
 if(0){
 
-// 主程序调用示例
-//cv::Mat test_img = cv::imread("test.jpg");
-//std::vector<cv::Rect> boxes;
-//std::vector<int> class_ids;
-//mpSystem->mpYOLODetector->SyncDetect(test_img, boxes, class_ids);
-
-
-
-
-            // 1. 执行异步检测（双缓冲机制）
             std::vector<cv::Rect> dynamicBoxes;
             std::vector<int> classIDs;
+            cv::Mat temmask;
             //mpSystem->mpYOLODetector->AsyncDetect(mImRGB, dynamicBoxes, classIDs);
-            cv::Mat temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
-       //     if(temmask.empty()){
+        
+                temmask = mpSystem->mpYOLODetector->SyncDetect(mImRGB, dynamicBoxes, classIDs).clone();
+             
+ 
+                //     if(temmask.empty()){
        //         std::cout << "temmask is empty" << std::endl;
        //     }
             //cv::imwrite("temmask.png", temmask);
